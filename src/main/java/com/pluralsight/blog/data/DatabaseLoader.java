@@ -1,6 +1,7 @@
 package com.pluralsight.blog.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -25,27 +26,48 @@ public class DatabaseLoader implements ApplicationRunner {
 
   // add a class variable
   private final PostRepository postRepository;
+  private final AuthorRepository authorRepository;
 
   // initialize
   @Autowired
-  public DatabaseLoader(PostRepository postRepository) {
+  public DatabaseLoader(PostRepository postRepository, AuthorRepository authorRepository) {
     this.postRepository = postRepository;
+    this.authorRepository = authorRepository;
   }
 
   @Override
   public void run(ApplicationArguments args) throws Exception {
+
+    // create author data
+    authors.addAll(
+        Arrays.asList(
+            new Author("sholderness", "Sarah", "Holderness", "password"),
+            new Author("tbell", "Tom", "Bell", "password"),
+            new Author("efisher", "Eric", "Fisher", "password"),
+            new Author("csouza", "Carlos", "Souza", "password")));
+
+    // save authors list to authorRepository
+    authorRepository.saveAll(authors);
+
     IntStream.range(0, 40)
         .forEach(
             i -> {
               String template = templates[i % templates.length];
               String gadget = gadgets[i % gadgets.length];
+              Author attachAuthorToPost = authors.get(i % authors.size());
 
               String title = String.format(template, gadget);
+              // create post object
               Post post =
                   new Post(title, "Lorem ipsum dolor sit amet, consectetur adipiscing elit… ");
+              post.setAuthor(attachAuthorToPost);
+              // add post to author with post vaiaralbe
+              attachAuthorToPost.addPost(post);
               randomPosts.add(post);
             });
 
     postRepository.saveAll(randomPosts);
+    // to update authors with posts
+    authorRepository.saveAll(authors);
   }
 }
